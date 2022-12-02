@@ -16,7 +16,7 @@ macro_rules! write_to_file {
 
 const HEADER: &str = r"// ============================================================================
 // DO NOT MODIFY THIS FILE!
-// IT WILL BE OVERWRITTEN EVERY TIME THE SOURCE IS BUILT! 
+// IT WILL BE OVERWRITTEN EVERY TIME THE SOURCE IS BUILT!
 // ============================================================================
 ";
 
@@ -76,7 +76,7 @@ fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
         let mut f = fs::File::create("./src/main.rs").unwrap();
         write!(
             f,
-            r"{}
+r"{}
 
 mod cli;
 pub use cli::RunPart;

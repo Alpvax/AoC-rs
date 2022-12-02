@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{num::ParseIntError, str::FromStr};
 
 use ::chrono::{Datelike, Utc};
 use clap::{builder::OsStr, command, value_parser, Arg};
@@ -37,6 +37,22 @@ impl FromStr for RunPart {
     }
 }
 
+enum YDArg {
+    Y(u16),
+    D(u8),
+}
+impl FromStr for YDArg {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() == 4 {
+            Ok(Self::Y(s.parse()?))
+        } else {
+            Ok(Self::D(s.parse()?))
+        }
+    }
+}
+
 pub fn main() {
     let today = Utc::now().date_naive();
     let args = command!("aoc")
@@ -46,20 +62,19 @@ pub fn main() {
         .args([
             Arg::new("year")
                 .required(today.month() != 12)
-                .requires("day")
                 .default_value(OsStr::from(today.format("%Y").to_string()))
-                .help("Specify the year of the solution to run. Defaults to the current year")
-                .value_parser(
-                    value_parser!(u16).range(
-                        2015..=if today.month() < 12 {
-                            today.year() - 1
-                        } else {
-                            today.year()
-                        }
-                        .try_into()
-                        .unwrap(),
-                    ),
-                ),
+                .help("Specify the year of the solution to run. Defaults to the current year"),
+                // .value_parser(
+                //     value_parser!(u16).range(
+                //         2015..=if today.month() < 12 {
+                //             today.year() - 1
+                //         } else {
+                //             today.year()
+                //         }
+                //         .try_into()
+                //         .unwrap(),
+                //     ),
+                // ),
             Arg::new("day")
                 .default_value(OsStr::from(today.format("%d").to_string()))
                 .help("Specify the day of the solution to run. Defaults to today")
@@ -71,8 +86,17 @@ pub fn main() {
                 .value_parser(["1", "2"]),
         ])
         .get_matches();
-    let &year = args.get_one::<u16>("year").unwrap();
-    let &day = args.get_one::<u8>("day").unwrap();
+    let (year, day) = match args
+        .get_one::<String>("year")
+        .map(|s| s.parse::<YDArg>().unwrap())
+    {
+        Some(YDArg::Y(y)) => (y, *args.get_one::<u8>("day").unwrap()),
+        Some(YDArg::D(d)) => (today.year().try_into().unwrap(), d),
+        None => (
+            today.year().try_into().unwrap(),
+            today.day().try_into().unwrap(),
+        ),
+    };
     let parts = args
         .get_one::<String>("part")
         .map(|s| s.parse::<RunPart>().unwrap())
