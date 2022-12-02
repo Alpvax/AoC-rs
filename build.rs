@@ -14,6 +14,12 @@ macro_rules! write_to_file {
     };
 }
 
+const HEADER: &str = r"// ============================================================================
+// DO NOT MODIFY THIS FILE!
+// IT WILL BE OVERWRITTEN EVERY TIME THE SOURCE IS BUILT! 
+// ============================================================================
+";
+
 fn main() {
     // Tell Cargo that if the given file changes, to rerun this build script.
     println!("cargo:rerun-if-changed=src");
@@ -31,7 +37,8 @@ fn main() {
             write_run_day(&file, &mut days);
             file = fs::File::create(path.parent().unwrap().join("mod.rs")).ok();
             prev_year = y_name.to_owned();
-            years.push(y_name.to_str().unwrap().to_string())
+            years.push(y_name.to_str().unwrap().to_string());
+            write_to_file!(file, "{}", HEADER);
         }
         let d_name = comp.next().unwrap().as_os_str().to_str().unwrap();
         days.push(d_name.to_string());
@@ -67,15 +74,23 @@ fn write_run_day(file: &Option<File>, days: &mut Vec<String>) {
 fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
     if years.len() > 0 {
         let mut f = fs::File::create("./src/main.rs").unwrap();
-        writeln!(f, "mod dispatch;\npub use dispatch::RunPart;\n\n fn main() {{\n    dispatch::main()\n}}\n")?;
-        for year in years.iter() {
-            writeln!(f, "pub mod {};", year)?;
-        }
-        writeln!(
+        write!(
             f,
-            "\npub fn run(year: u16, day: u8, part: crate::RunPart) {{\n    match year {{"
+            r"{}
+
+mod cli;
+pub use cli::RunPart;
+
+fn main() {{
+    cli::main()
+}}
+
+pub fn run(year: u16, day: u8, part: crate::RunPart) {{
+    match year {{
+",
+            HEADER
         )?;
-        for year in years {
+        for year in years.iter() {
             writeln!(
                 f,
                 "        {} => {}::run_day(day, part),",
@@ -83,8 +98,15 @@ fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
                 year
             )?;
         }
-        writeln!(f, "        _ => panic!(\"Invalid year: no solutions have been written for {{}}\", year),\n    }}\n}}")
-    } else {
-        Ok(())
+        writeln!(
+            f,
+            r#"        _ => panic!("Invalid year: no solutions have been written for {{}}", year),
+            }}
+        }}"#
+        )?;
+        for year in years {
+            writeln!(f, "pub mod {};", year)?;
+        }
     }
+    Ok(())
 }

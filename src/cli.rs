@@ -40,11 +40,15 @@ impl FromStr for RunPart {
 pub fn main() {
     let today = Utc::now().date_naive();
     let args = command!("aoc")
+        .about("Runs the rust solutions to Advent of Code")
+        .author("Alpvax <development@alpvax.uk>")
+        .override_usage("aoc [[YYYY] day] [-p 1|2]")
         .args([
             Arg::new("year")
                 .required(today.month() != 12)
                 .requires("day")
                 .default_value(OsStr::from(today.format("%Y").to_string()))
+                .help("Specify the year of the solution to run. Defaults to the current year")
                 .value_parser(
                     value_parser!(u16).range(
                         2015..=if today.month() < 12 {
@@ -57,13 +61,13 @@ pub fn main() {
                     ),
                 ),
             Arg::new("day")
-                .short('d')
-                .long("day")
                 .default_value(OsStr::from(today.format("%d").to_string()))
+                .help("Specify the day of the solution to run. Defaults to today")
                 .value_parser(value_parser!(u8).range(1..=25)),
             Arg::new("part")
                 .short('p')
                 .long("part")
+                .help("Specify the part of the solution to run. If not specified, both parts are run.\n")
                 .value_parser(["1", "2"]),
         ])
         .get_matches();

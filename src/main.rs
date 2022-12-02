@@ -1,15 +1,20 @@
-mod dispatch;
-pub use dispatch::RunPart;
+// ============================================================================
+// DO NOT MODIFY THIS FILE!
+// IT WILL BE OVERWRITTEN EVERY TIME THE SOURCE IS BUILT! 
+// ============================================================================
 
- fn main() {
-    dispatch::main()
+
+mod cli;
+pub use cli::RunPart;
+
+fn main() {
+    cli::main()
 }
-
-pub mod y2022;
 
 pub fn run(year: u16, day: u8, part: crate::RunPart) {
     match year {
         2022 => y2022::run_day(day, part),
         _ => panic!("Invalid year: no solutions have been written for {}", year),
-    }
-}
+            }
+        }
+pub mod y2022;
