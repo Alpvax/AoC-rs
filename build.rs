@@ -76,7 +76,7 @@ fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
         let mut f = fs::File::create("./src/main.rs").unwrap();
         write!(
             f,
-r"{}
+            r"{}
 
 mod cli;
 pub use cli::RunPart;

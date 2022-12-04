@@ -1,6 +1,7 @@
 fn priority(c: char) -> u8 {
     let ord = u8::try_from(c).unwrap();
-    if ord >= 97 { // 97 = 'a'
+    if ord >= 97 {
+        // 97 = 'a'
         ord - 96
     } else {
         // 65 = 'A'
@@ -33,8 +34,7 @@ fn intersection_group<T: From<u8>>(s1: &str, s2: &str, s3: &str) -> T {
 }
 
 #[allow(dead_code)]
-const TEST_INPUT: &str =
-r"vJrwpWtwJgWrhcsFMMfFFhFp
+const TEST_INPUT: &str = r"vJrwpWtwJgWrhcsFMMfFFhFp
 jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
 PmmdzqPrVvPwwTWBwg
 wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
@@ -42,7 +42,10 @@ ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw";
 
 pub fn main(parts: crate::RunPart) {
-    let data: u16 = include_str!("../../../input/2022/03.txt").split("\n").map(intersection::<u16>).sum();
+    let data: u16 = include_str!("../../../input/2022/03.txt")
+        .split("\n")
+        .map(intersection::<u16>)
+        .sum();
     if parts.run_p1() {
         println!("Part 1: {}", data);
     }
@@ -54,7 +57,8 @@ pub fn main(parts: crate::RunPart) {
             loop {
                 let n = lines.next();
                 if let Some(a) = n {
-                    total += intersection_group::<u16>(a, lines.next().unwrap(), lines.next().unwrap());
+                    total +=
+                        intersection_group::<u16>(a, lines.next().unwrap(), lines.next().unwrap());
                 } else {
                     break total;
                 }
