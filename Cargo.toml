@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.23"
 clap = { version = "4.0.29", features = ["cargo", "string"] }
+lazy_static = "1.4.0"
+regex = "1.7.0"
 
 [build-dependencies]
 glob = "0.3.0"
