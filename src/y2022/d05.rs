@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use regex::Regex;
+use fancy_regex::Regex;
 
 #[allow(dead_code)]
 const TEST_INPUT: &str = r"    [D]    
@@ -86,7 +86,7 @@ impl FromStr for Instruction {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let caps = INST_RE.captures(s).ok_or(())?;
+        let caps = INST_RE.captures(s).map_err(|_| ())?.ok_or(())?;
         Ok(Self {
             count: caps.get(1).unwrap().as_str().parse().map_err(|_| ())?,
             from: caps.get(2).unwrap().as_str().parse().map_err(|_| ())?,
