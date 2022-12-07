@@ -77,7 +77,6 @@ fn write_main(years: Vec<String>) -> Result<(), io::Error> {
         write!(
             f,
             r"{}
-
 mod cli;
 pub use cli::RunPart;
 mod dispatch;
