@@ -5,6 +5,9 @@
 
 mod cli;
 pub use cli::RunPart;
+mod dispatch;
+#[allow(unused_imports)]
+use dispatch::*;
 
 fn main() {
     cli::main()

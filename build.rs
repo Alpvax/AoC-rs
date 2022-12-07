@@ -80,6 +80,9 @@ fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
 
 mod cli;
 pub use cli::RunPart;
+mod dispatch;
+#[allow(unused_imports)]
+use dispatch::*;
 
 fn main() {{
     cli::main()
