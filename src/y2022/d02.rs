@@ -122,15 +122,9 @@ impl FromStr for Round {
     }
 }
 
-pub fn main(part: crate::RunPart) {
-    let rounds = include_str!("../../../input/2022/02.txt")
-        .split("\n")
-        .map(|s| s.parse::<Round>())
-        .filter_map(|r| r.ok());
-    if part.run_p1() {
-        println!("Part 1: {}", rounds.clone().fold(0, |t, r| t + r.score1()));
-    }
-    if part.run_p2() {
-        println!("Part 2: {}", rounds.fold(0, |t, r| t + r.score2()));
-    }
+crate::aoc! {
+    include_str!("../../../input/2022/02.txt"),
+    |input| input.split("\n").map(|s| s.parse::<Round>()).filter_map(|r| r.ok()),
+    |rounds| rounds.clone().fold(0, |t, r| t + r.score1()),
+    |rounds| rounds.fold(0, |t, r| t + r.score2())
 }

@@ -41,28 +41,20 @@ wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
 ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw";
 
-pub fn main(parts: crate::RunPart) {
-    let data: u16 = include_str!("../../../input/2022/03.txt")
-        .split("\n")
-        .map(intersection::<u16>)
-        .sum();
-    if parts.run_p1() {
-        println!("Part 1: {}", data);
-    }
-    if parts.run_p2() {
-        let mut lines = include_str!("../../../input/2022/03.txt").split("\n");
+crate::aoc! {
+    include_str!("../../../input/2022/03.txt"),
+    |input| input.split("\n").map(intersection::<u16>).sum::<u16>(),
+    |input| {
+        let mut lines = input.split("\n");
         let mut total = 0u16;
-        println!(
-            "Part 2: {}",
-            loop {
-                let n = lines.next();
-                if let Some(a) = n {
-                    total +=
-                        intersection_group::<u16>(a, lines.next().unwrap(), lines.next().unwrap());
-                } else {
-                    break total;
-                }
-            },
-        );
+        loop {
+            let n = lines.next();
+            if let Some(a) = n {
+                total +=
+                    intersection_group::<u16>(a, lines.next().unwrap(), lines.next().unwrap());
+            } else {
+                break total;
+            }
+        }
     }
 }

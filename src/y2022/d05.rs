@@ -13,7 +13,7 @@ move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Stacks<const N: usize>([Vec<char>; N]);
 impl<const N: usize> FromStr for Stacks<N> {
     type Err = ();
@@ -95,25 +95,28 @@ impl FromStr for Instruction {
     }
 }
 
-pub fn main(parts: crate::RunPart) {
-    let (stacks, moves) = include_str!("../../../input/2022/05.txt")
-        .split_once("\n\n")
-        .unwrap();
-    let mut stacks: Stacks<9> = stacks.parse().unwrap();
-    let moves = moves
-        .split("\n")
-        .filter_map(|s| s.parse::<Instruction>().ok())
-        .collect::<Vec<_>>();
-    if parts.run_p1() {
-        for inst in &moves {
+crate::aoc! {
+    include_str!("../../../input/2022/05.txt"),
+    |input| {
+        let (stacks, moves) = input.split_once("\n\n").unwrap();
+        let stacks: Stacks<9> = stacks.parse().unwrap();
+        let moves = moves
+            .split("\n")
+            .filter_map(|s| s.parse::<Instruction>().ok())
+            .collect::<Vec<_>>();
+        (stacks, moves)
+    },
+    |(stacks, moves)| {
+        let mut stacks = stacks.clone();
+        for inst in moves {
             stacks.move_crates(inst);
         }
-        println!("Part 1: {}", stacks.top_crates());
-    }
-    if parts.run_p2() {
+        stacks.top_crates()
+    },
+    |(mut stacks, moves)| {
         for inst in &moves {
             stacks.move_crates_simultaneously(inst);
         }
-        println!("Part 2: {}", stacks.top_crates());
-    }
+        stacks.top_crates()
+    },
 }
