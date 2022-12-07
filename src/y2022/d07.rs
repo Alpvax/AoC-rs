@@ -1,12 +1,99 @@
-use std::str::FromStr;
+use std::collections::HashMap;
+
+const ROOT: InodeName<'static> = InodeName(Vec::new());
+
+#[derive(PartialEq, Eq, Hash)]
+pub struct InodeName<'s>(Vec<&'s str>);
+impl<'s> InodeName<'s> {
+    pub fn parent(&self) -> Option<InodeName<'s>> {
+        let l = self.0.len();
+        if l > 1 {
+            Some(self.0[0..l - 1].iter().collect())
+        } else if l > 0 {
+            Some(ROOT)
+        } else {
+            None
+        }
+    }
+    /// Returns a new name, leaving this one unmodified
+    pub fn with(&self, child: &'s str) -> InodeName<'s> {
+        self.0
+            .iter()
+            .copied()
+            .chain(core::iter::once(child))
+            .collect()
+    }
+    /// Append child to the end of this path, modifying it
+    pub fn push(&mut self, child: &'s str) {
+        self.0.push(child);
+    }
+    /// Remove the end of this path, modifying it. No-op if the path is empty
+    pub fn pop(&mut self) {
+        self.0.pop();
+    }
+}
+impl<'s> FromIterator<&'s str> for InodeName<'s> {
+    fn from_iter<T: IntoIterator<Item = &'s str>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+impl<'s: 't, 't> FromIterator<&'t &'s str> for InodeName<'s> {
+    fn from_iter<T: IntoIterator<Item = &'t &'s str>>(iter: T) -> Self {
+        Self(iter.into_iter().copied().collect())
+    }
+}
+impl<'s> core::fmt::Display for InodeName<'s> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.len() > 0 {
+            write!(
+                f,
+                "{}",
+                self.0.iter().fold(String::new(), |mut acc, &s| {
+                    acc.push('/');
+                    acc.push_str(s);
+                    acc
+                })
+            )
+        } else {
+            write!(f, "/")
+        }
+    }
+}
+impl<'s> core::fmt::Debug for InodeName<'s> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("InodeName")
+            .field(&format!("{}", self))
+            .finish()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Inode {
+    Dir,
+    File(u32),
+}
+// impl Inode {
+//     pub fn is_file(&self) -> bool {
+//         match self {
+//             Inode::Dir => false,
+//             Inode::File(_) => true,
+//         }
+//     }
+//     pub fn is_dir(&self) -> bool {
+//         match self {
+//             Inode::Dir => true,
+//             Inode::File(_) => false,
+//         }
+//     }
+// }
 
 #[derive(Debug)]
-enum Cd<'s> {
+enum CdArg<'s> {
     In(&'s str),
     Out,
     Root,
 }
-impl<'s> From<&'s str> for Cd<'s> {
+impl<'s> From<&'s str> for CdArg<'s> {
     fn from(s: &'s str) -> Self {
         match s {
             "/" => Self::Root,
@@ -15,201 +102,129 @@ impl<'s> From<&'s str> for Cd<'s> {
         }
     }
 }
+#[derive(Debug)]
+enum LsItem<'s> {
+    Dir(&'s str),
+    File(&'s str, u32),
+}
+impl<'s> LsItem<'s> {
+    // #[inline]
+    // fn name(&self) -> &'s str {
+    //     match self {
+    //         LsItem::Dir(n) | LsItem::File(n, _) => *n,
+    //     }
+    // }
+    // fn path(&self, parent: &InodeName<'s>) -> InodeName<'s> {
+    //     parent.with(self.name())
+    // }
+    fn to_inode(self, parent: &InodeName<'s>) -> (InodeName<'s>, Inode) {
+        match self {
+            LsItem::Dir(n) => (parent.with(n), Inode::Dir),
+            LsItem::File(n, s) => (parent.with(n), Inode::File(s)),
+        }
+    }
+}
+impl<'s> TryFrom<&'s str> for LsItem<'s> {
+    type Error = String;
+
+    fn try_from(s: &'s str) -> Result<Self, Self::Error> {
+        s.split_once(" ")
+            .ok_or(format!("Error parsing ls item: \"{}\"", s))
+            .and_then(|(s, name)| {
+                Ok(if s == "dir" {
+                    Self::Dir(name)
+                } else {
+                    Self::File(
+                        name,
+                        s.parse()
+                            .map_err(|e| format!("Error parsing file size: {:?}", e))?,
+                    )
+                })
+            })
+    }
+}
 
 #[derive(Debug)]
 enum Command<'s> {
-    Cd(Cd<'s>),
-    Ls(Vec<Inode<'s>>),
+    Cd(CdArg<'s>),
+    Ls(Vec<LsItem<'s>>),
 }
-// impl FromStr for Command<'_> {
-//     type Err = String;
+impl<'s> TryFrom<&'s str> for Command<'s> {
+    type Error = &'static str;
 
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         let s = match s.strip_prefix("$ ") {
-//             Some(s) => s,
-//             None => s,
-//         };
-
-//     }
-// }
-
-#[derive(Debug)]
-enum Inode<'s> {
-    Dir(&'s str, Option<Vec<Inode<'s>>>),
-    File(&'s str, u32),
-}
-impl<'s> Inode<'s> {
-    fn name(&self) -> &'s str {
-        match self {
-            Inode::Dir(n, _) | Inode::File(n, _) => n,
-        }
-    }
-    fn size(&self) -> u32 {
-        match self {
-            Inode::Dir(_, None) => 0,
-            Inode::Dir(_, Some(nodes)) => nodes.iter().map(|n| n.size()).sum(),
-            Inode::File(_, s) => *s,
-        }
-    }
-    fn child(&self, name: &'s str) -> Option<&Inode<'s>> {
-        if let Self::Dir(_, Some(children)) = self {
-            children.iter().find(|n| n.name() == name)
+    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
+        if value.starts_with("cd") {
+            value
+                .split_whitespace()
+                .nth(1)
+                .map(|s| Self::Cd(s.into()))
+                .ok_or("Error parsing cd arg")
+        } else if value.starts_with("ls") {
+            Ok(Self::Ls(
+                value
+                    .split("\n")
+                    .skip(1)
+                    .filter_map(|s| s.try_into().ok())
+                    .collect(),
+            ))
         } else {
-            None
-        }
-    }
-    fn child_mut(&mut self, name: &'s str) -> Option<&mut Inode<'s>> {
-        if let Self::Dir(_, Some(children)) = self {
-            for node in children {
-                if node.name() == name {
-                    return Some(node);
-                }
-            }
-        }
-        None
-    }
-}
-impl std::fmt::Display for Inode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let pad = f.width().unwrap_or(0) * 2;
-        let fmt_name = format!("{: >pad$} {}", "-", self.name());
-        match self {
-            Inode::Dir(_, None) => write!(f, "{}\n{: >pad_child$}\n", fmt_name, "Unknown", pad_child = pad + 2),
-            Inode::Dir(_, Some(nodes)) => {
-                let pad = pad + 2;
-                writeln!(f, "{}", fmt_name)?;
-                for child in nodes {
-                    writeln!(f, "{: >pad$}", child, pad = pad)?;
-                }
-                Ok(())
-            },
-            Inode::File(_, s) => write!(f, "{} (size={})", fmt_name, s),
+            Err("Invalid command!")
         }
     }
 }
 
-struct PartialTree<'s> {
-    root: Inode<'s>,
-    path: Vec<&'s str>,
+struct FSParser<'s> {
+    current_path: InodeName<'s>,
+    files: HashMap<InodeName<'s>, Inode>,
 }
-impl<'s> PartialTree<'s> {
+impl<'s> FSParser<'s> {
     fn new() -> Self {
         Self {
-            root: Inode::Dir("/", None),
-            path: Vec::new(),
+            current_path: ROOT,
+            files: HashMap::new(),
         }
     }
-    fn cd<P>(&mut self, arg: P)
-    where
-        P: Into<Cd<'s>>,
-    {
-        match P::into(arg) {
-            Cd::In(p) => self.path.push(p),
-            Cd::Out => {
-                self.path.pop();
-            }
-            Cd::Root => self.path.clear(),
-        }
-    }
-    fn ls(&mut self, contents: Vec<Inode<'s>>) -> Result<(), String> {
-        match self.inode_mut(self.path.iter().map(|s| *s)) {
-            Ok(Inode::Dir(_, c)) => {
-                if c.is_some() {
-                    Err(format!(
-                        "Directory \"/{}\" has already been listed",
-                        self.path.join("/")
-                    ))
-                } else {
-                    *c = Some(contents);
-                    Ok(())
+    fn cmd(&mut self, cmd: Command<'s>) {
+        match cmd {
+            Command::Cd(CdArg::In(child)) => self.current_path.push(child),
+            Command::Cd(CdArg::Out) => self.current_path.pop(),
+            Command::Cd(CdArg::Root) => self.current_path = ROOT,
+            Command::Ls(contents) => {
+                for item in contents {
+                    let (path, inode) = item.to_inode(&self.current_path);
+                    if self.files.contains_key(&path) {
+                        eprintln!(
+                            "Replacing inode \"{}\"!\n\tOld = {:?};\n\tNew = {:?};",
+                            &path,
+                            self.files.get(&path).unwrap(),
+                            &inode
+                        );
+                    }
+                    self.files.insert(path, inode);
                 }
             }
-            Ok(_) => unreachable!("Current path does not point to a directory"),
-            Err(s) => Err(s),
         }
     }
-    fn inode_mut<P>(&mut self, path: P) -> Result<&mut Inode<'s>, String> where P: Iterator<Item=&'s str> {
-        let mut node = &mut self.root;
-        let mut processed_path = Vec::new();
-        for seg in path {
-            processed_path.push(seg);
-            if let Some(n) = node.child_mut(seg) {
-                node = n;
-            } else {
-                return Err(format!(
-                    "Missing dir node: \"/{}\"",
-                    processed_path.join("/")
-                ));
-            }
-        }
-        Ok(&mut node)
-    }
-    fn inode<P>(&self, path: P) -> Result<&Inode<'s>, String> where P: Iterator<Item=&'s str> {
-        let mut node = &self.root;
-        let mut processed_path = Vec::new();
-        for seg in path {
-            processed_path.push(seg);
-            if let Some(n) = node.child(seg) {
-                node = n;
-            } else {
-                return Err(format!(
-                    "Missing dir node: \"/{}\"",
-                    processed_path.join("/")
-                ));
-            }
-        }
-        Ok(&node)
-    }
-}
-impl<'a> FromStr for PartialTree<'a> {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut tree = Self::new();
-        for cmd in s.split("$ ").filter_map(|s| {
-            let s = s.trim();
-            if s.len() > 0 {
-                if s.starts_with("cd") {
-                    Some(Command::Cd(s.split_once(" ").unwrap().1.into()))
-                } else if s.starts_with("ls") {
-                    Some(Command::Ls(
-                        s.split_whitespace()
-                            .skip(1)
-                            .filter_map(|line| {
-                                let line = line.trim();
-                                if line.len() > 0 {
-                                    line.split_once(" ").map(|(s, name)| {
-                                        if s == "dir" {
-                                            Inode::Dir(name, None)
-                                        } else {
-                                            Inode::File(
-                                                name,
-                                                s.parse().expect("Error parsing file size"),
-                                            )
-                                        }
-                                    })
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect(),
-                    ))
-                } else {
-                    None
-                }
+    fn calc_sizes(&self) -> HashMap<InodeName<'s>, u32> {
+        let mut map = HashMap::new();
+        for (path, f_size) in self.files.iter().filter_map(|(p, n)| {
+            if let Inode::File(s) = n {
+                Some((p, s))
             } else {
                 None
             }
         }) {
-            match cmd {
-                Command::Cd(arg) => tree.cd(arg),
-                Command::Ls(contents) => tree.ls(contents)?,
+            let mut p = path.parent();
+            while let Some(path) = p {
+                p = path.parent();
+                *map.entry(path).or_insert(0) += f_size;
             }
         }
-        Ok(tree)
+        map
     }
 }
 
+#[allow(dead_code)]
 const TEST_INPUT: &str = r"$ cd /
 $ ls
 dir a
@@ -235,6 +250,25 @@ $ ls
 7214296 k";
 
 pub fn main(parts: crate::RunPart) {
-    let tree = TEST_INPUT.parse::<PartialTree>();
-
+    let tree = include_str!("../../../input/2022/07.txt")
+        .split("$ ")
+        .filter_map(|s| Command::try_from(s).ok())
+        .fold(FSParser::new(), |mut p, c| {
+            p.cmd(c);
+            p
+        });
+    let dirs = tree.calc_sizes();
+    if parts.run_p1() {
+        println!(
+            "Part 1: {}",
+            dirs.values().filter(|&s| s <= &100_000).sum::<u32>()
+        );
+    }
+    if parts.run_p2() {
+        let required = dirs.get(&ROOT).unwrap() - 40_000_000; // 70M (total) - 30M (required) = 40M (allowed)
+        println!(
+            "Part 2: {}",
+            dirs.values().filter(|&s| s >= &required).min().unwrap()
+        );
+    }
 }
