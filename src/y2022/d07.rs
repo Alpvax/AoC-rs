@@ -249,26 +249,26 @@ $ ls
 5626152 d.ext
 7214296 k";
 
-pub fn main(parts: crate::RunPart) {
-    let tree = include_str!("../../../input/2022/07.txt")
+fn setup(input: &str) -> HashMap<InodeName, u32> {
+    input
         .split("$ ")
         .filter_map(|s| Command::try_from(s).ok())
         .fold(FSParser::new(), |mut p, c| {
             p.cmd(c);
             p
-        });
-    let dirs = tree.calc_sizes();
-    if parts.run_p1() {
-        println!(
-            "Part 1: {}",
-            dirs.values().filter(|&s| s <= &100_000).sum::<u32>()
-        );
-    }
-    if parts.run_p2() {
-        let required = dirs.get(&ROOT).unwrap() - 40_000_000; // 70M (total) - 30M (required) = 40M (allowed)
-        println!(
-            "Part 2: {}",
-            dirs.values().filter(|&s| s >= &required).min().unwrap()
-        );
-    }
+        })
+        .calc_sizes()
 }
+fn part1(dirs: &HashMap<InodeName, u32>) -> u32 {
+    dirs.values().filter(|&s| s <= &100_000).sum::<u32>()
+}
+fn part2(dirs: HashMap<InodeName, u32>) -> u32 {
+    let required = dirs.get(&ROOT).unwrap() - 40_000_000; // 70M (total) - 30M (required) = 40M (allowed)
+    *dirs.values().filter(|&s| s >= &required).min().unwrap()
+}
+crate::aoc!(
+    include_str!("../../../input/2022/07.txt"),
+    setup,
+    part1,
+    part2
+);
