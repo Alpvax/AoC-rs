@@ -80,6 +80,8 @@ fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
 
 mod cli;
 pub use cli::RunPart;
+mod dispatch;
+use dispatch::aoc;
 
 fn main() {{
     cli::main()

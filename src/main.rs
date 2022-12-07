@@ -6,6 +6,8 @@
 
 mod cli;
 pub use cli::RunPart;
+mod dispatch;
+use dispatch::aoc;
 
 fn main() {
     cli::main()
