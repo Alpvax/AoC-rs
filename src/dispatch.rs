@@ -43,10 +43,10 @@ where
                     format_setup_duration!(" ({:?} including setup)", d + d1),
                 );
                 let i2 = Instant::now();
-                let p2 = self.part1(&setup);
+                let p2 = self.part2(setup);
                 let d2 = i2.elapsed();
                 println!(
-                    "Part 1: {}. Completed in {:?}{}",
+                    "Part 2: {}. Completed in {:?}{}",
                     p2,
                     d2,
                     format_setup_duration!(" ({:?} including setup)", d + d2),
@@ -65,10 +65,10 @@ where
             }
             crate::RunPart::Part2 => {
                 let i2 = Instant::now();
-                let p2 = self.part1(&setup);
+                let p2 = self.part2(setup);
                 let d2 = i2.elapsed();
                 println!(
-                    "Part 1: {}. Completed in {:?}{}",
+                    "Part 2: {}. Completed in {:?}{}",
                     p2,
                     d2,
                     format_setup_duration!(" ({:?} including setup)", d + d2),
