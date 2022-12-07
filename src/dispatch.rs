@@ -1,9 +1,17 @@
 #![allow(dead_code)]
 
-use std::{
-    fmt::Display,
-    time::{Duration, Instant},
-};
+use std::{fmt::Display, time::Instant};
+
+const EMPTY_STR: String = String::new();
+macro_rules! format_setup_duration {
+    ($s:literal, $d:expr) => {
+        if Self::has_setup() {
+            format!($s, $d)
+        } else {
+            EMPTY_STR
+        }
+    };
+}
 
 pub(crate) trait AocSolutions<'s, C, S1, S2 = &'static str>
 where
@@ -11,60 +19,59 @@ where
     S2: Display,
 {
     fn setup(&self, input: &'s str) -> C;
-    fn format_setup_elapsed(dur: Duration) -> String {
-        format!(" ({:?} including setup)", dur)
+    fn has_setup() -> bool {
+        true
     }
     fn part1(&self, input: &C) -> S1;
     fn part2(&self, input: C) -> S2;
-    fn run_p1(&self, setup: &C) -> (S1, Duration) {
-        let now = Instant::now();
-        let res = self.part1(setup);
-        let e = now.elapsed();
-        (res, e)
-    }
-    fn run_p2(&self, setup: C) -> (S2, Duration) {
-        let now = Instant::now();
-        let res = self.part2(setup);
-        let e = now.elapsed();
-        (res, e)
-    }
     fn run(&self, input: &'s str, parts: crate::RunPart) {
         let now = Instant::now();
         let setup = self.setup(input);
-        let e = now.elapsed();
+        let d = now.elapsed();
+        if Self::has_setup() {
+            println!("Setup took {:?}", d)
+        };
         match parts {
             crate::RunPart::All => {
-                let p1 = self.run_p1(&setup);
+                let i1 = Instant::now();
+                let p1 = self.part1(&setup);
+                let d1 = i1.elapsed();
                 println!(
                     "Part 1: {}. Completed in {:?}{}",
-                    p1.0,
-                    p1.1,
-                    Self::format_setup_elapsed(e + p1.1)
+                    p1,
+                    d1,
+                    format_setup_duration!(" ({:?} including setup)", d + d1),
                 );
-                let p2 = self.run_p2(setup);
+                let i2 = Instant::now();
+                let p2 = self.part1(&setup);
+                let d2 = i2.elapsed();
                 println!(
-                    "Part 2: {}. Completed in {:?}{}",
-                    p2.0,
-                    p2.1,
-                    Self::format_setup_elapsed(e + p2.1)
+                    "Part 1: {}. Completed in {:?}{}",
+                    p2,
+                    d2,
+                    format_setup_duration!(" ({:?} including setup)", d + d2),
                 );
             }
             crate::RunPart::Part1 => {
-                let p1 = self.run_p1(&setup);
+                let i1 = Instant::now();
+                let p1 = self.part1(&setup);
+                let d1 = i1.elapsed();
                 println!(
                     "Part 1: {}. Completed in {:?}{}",
-                    p1.0,
-                    p1.1,
-                    Self::format_setup_elapsed(e + p1.1)
+                    p1,
+                    d1,
+                    format_setup_duration!(" ({:?} including setup)", d + d1),
                 );
             }
             crate::RunPart::Part2 => {
-                let p2 = self.run_p2(setup);
+                let i2 = Instant::now();
+                let p2 = self.part1(&setup);
+                let d2 = i2.elapsed();
                 println!(
-                    "Part 2: {}. Completed in {:?}{}",
-                    p2.0,
-                    p2.1,
-                    Self::format_setup_elapsed(e + p2.1)
+                    "Part 1: {}. Completed in {:?}{}",
+                    p2,
+                    d2,
+                    format_setup_duration!(" ({:?} including setup)", d + d2),
                 );
             }
         }
@@ -89,8 +96,8 @@ where
     fn setup(&self, input: &'s str) -> &'s str {
         input
     }
-    fn format_setup_elapsed(_dur: Duration) -> String {
-        String::new()
+    fn has_setup() -> bool {
+        false
     }
     fn part1(&self, input: &&'s str) -> S1 {
         self.0(*input)
@@ -145,8 +152,8 @@ where
     fn setup(&self, input: &'s str) -> &'s str {
         input
     }
-    fn format_setup_elapsed(_dur: Duration) -> String {
-        String::new()
+    fn has_setup() -> bool {
+        false
     }
     fn part1(&self, input: &&'s str) -> S1 {
         self.0(*input)
