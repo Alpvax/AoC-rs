@@ -45,7 +45,7 @@ fn main() {
         write_to_file!(file, "pub mod {};", d_name);
     }
     write_run_day(&file, &mut days);
-    if let Err(e) = write_dispatcher(years) {
+    if let Err(e) = write_main(years) {
         println!("cargo:warning=Failed writing to \"main.rs\": {:?}", e);
     }
 }
@@ -71,7 +71,7 @@ fn write_run_day(file: &Option<File>, days: &mut Vec<String>) {
     }
 }
 
-fn write_dispatcher(years: Vec<String>) -> Result<(), io::Error> {
+fn write_main(years: Vec<String>) -> Result<(), io::Error> {
     if years.len() > 0 {
         let mut f = fs::File::create("./src/main.rs").unwrap();
         write!(
@@ -104,8 +104,8 @@ pub fn run(year: u16, day: u8, part: crate::RunPart) {{
         writeln!(
             f,
             r#"        _ => panic!("Invalid year: no solutions have been written for {{}}", year),
-            }}
-        }}"#
+    }}
+}}"#
         )?;
         for year in years {
             writeln!(f, "pub mod {};", year)?;
