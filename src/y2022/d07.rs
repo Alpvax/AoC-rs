@@ -273,7 +273,7 @@ fn part2(dirs: HashMap<InodeName, u32>) -> u32 {
 //     part2
 // );
 pub fn main(parts: crate::RunPart) {
-    use crate::dispatcher::{Dispatcher, DispatcherBuilder};
+    use crate::dispatcher::*;
     let dispatcher = DispatcherBuilder::setup(setup).part1(part1).part2(part2);
     dispatcher.run(include_str!("../../../input/2022/07.txt"), parts);
 }
