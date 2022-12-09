@@ -8,6 +8,9 @@ pub use cli::RunPart;
 mod dispatch;
 #[allow(unused_imports)]
 use dispatch::*;
+mod dispatcher;
+#[allow(unused_imports)]
+use dispatcher::*;
 
 fn main() {
     cli::main()

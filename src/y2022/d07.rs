@@ -266,9 +266,14 @@ fn part2(dirs: HashMap<InodeName, u32>) -> u32 {
     let required = dirs.get(&ROOT).unwrap() - 40_000_000; // 70M (total) - 30M (required) = 40M (allowed)
     *dirs.values().filter(|&s| s >= &required).min().unwrap()
 }
-crate::aoc!(
-    include_str!("../../../input/2022/07.txt"),
-    setup,
-    part1,
-    part2
-);
+// crate::aoc!(
+//     include_str!("../../../input/2022/07.txt"),
+//     setup,
+//     part1,
+//     part2
+// );
+pub fn main(parts: crate::RunPart) {
+    use crate::dispatcher::*;
+    let dispatcher = DispatcherBuilder::setup(setup).part1(part1).part2(part2);
+    dispatcher.run(include_str!("../../../input/2022/07.txt"), parts);
+}
