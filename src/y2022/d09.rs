@@ -87,6 +87,12 @@ impl Direction8 {
             Self::DL | Self::D | Self::DR => Vert::Down,
         }
     }
+    fn set_x(&mut self, horz: Horz) {
+        *self = self.y() + horz
+    }
+    fn set_y(&mut self, vert: Vert) {
+        *self = self.x() + vert
+    }
     fn offset(&self, (x, y): Point) -> Point {
         (
             x + match self.x() {
@@ -193,55 +199,63 @@ impl Bridge {
         self.y_min = min(y, self.y_min);
         self.y_max = max(y, self.y_max);
     }
+    fn set_tail(&mut self, x: i16, y: i16) {
+        self.tail_history.insert((x, y));
+        self.tail_dir = (match x - self.head.0 {
+            i16::MIN..=-1 => Horz::Left,
+            0 => Horz::Equal,
+            1.. => Horz::Right,
+        }) + (match y - self.head.1 {
+            i16::MIN..=-1 => Vert::Up,
+            0 => Vert::Equal,
+            1.. => Vert::Down,
+        })
+    }
     fn do_move(&mut self, move_: Move) {
         let (x, y) = self.head;
         match move_ {
             Move::Up(dist) => {
                 let d = dist.into();
                 self.set_head(x, y - d);
-                for i in (match self.tail_dir.y() {
-                    Vert::Up => 2,
-                    Vert::Equal => 1,
-                    Vert::Down => 0,
-                })..d
-                {
-                    self.tail_history.insert((x, y - i));
+                for i in 0..d {
+                    match self.tail_dir.y() {
+                        Vert::Up => self.tail_dir.set_y(Vert::Equal),
+                        Vert::Equal => self.tail_dir.set_y(Vert::Down),
+                        Vert::Down => self.set_tail(x, y - i),
+                    }
                 }
             }
             Move::Down(dist) => {
                 let d = dist.into();
                 self.set_head(x, y + d);
-                for i in (match self.tail_dir.y() {
-                    Vert::Up => 0,
-                    Vert::Equal => 1,
-                    Vert::Down => 2,
-                })..d
-                {
-                    self.tail_history.insert((x, y + i));
+                for i in 0..d {
+                    match self.tail_dir.y() {
+                        Vert::Up => self.set_tail(x, y + i),
+                        Vert::Equal => self.tail_dir.set_y(Vert::Up),
+                        Vert::Down => self.tail_dir.set_y(Vert::Equal),
+                    }
                 }
             }
             Move::Left(dist) => {
                 let d = dist.into();
                 self.set_head(x - d, y);
-                for i in (match self.tail_dir.x() {
-                    Horz::Left => 2,
-                    Horz::Equal => 1,
-                    Horz::Right => 0,
-                })..d
-                {
-                    self.tail_history.insert((x - i, y));
+                for i in 0..d {
+                    match self.tail_dir.x() {
+                        Horz::Left => self.tail_dir.set_x(Horz::Equal),
+                        Horz::Equal => self.tail_dir.set_x(Horz::Right),
+                        Horz::Right => self.set_tail(x - i, y),
+                    }
                 }
             }
             Move::Right(dist) => {
                 let d = dist.into();
                 self.set_head(x + d, y);
-                for i in dbg!((match dbg!(self.tail_dir.x()) {
-                    Horz::Left => 0,
-                    Horz::Equal => 1,
-                    Horz::Right => 2,
-                })..d)
-                {
-                    self.tail_history.insert((x + i, y));
+                for i in 0..d {
+                    match self.tail_dir.x() {
+                        Horz::Left => self.set_tail(x + i, y),
+                        Horz::Equal => self.tail_dir.set_x(Horz::Left),
+                        Horz::Right => self.tail_dir.set_x(Horz::Equal),
+                    }
                 }
             }
         }
@@ -294,12 +308,13 @@ pub fn main(parts: crate::RunPart) {
     DispatcherBuilder::setup(|input| input.split("\n").filter_map(|s| s.parse::<Move>().ok()))
         .part1(|moves| {
             let bridge = moves.clone().fold(Bridge::new(), |mut b, m| {
-                println!("{}\n{:?} =>", b, m); //XXX
+                // println!("{}\n{:?} =>", b, m); //XXX
                 b.do_move(m);
                 b
             });
-            println!("{}", bridge); //XXX
+            // println!("{}", bridge); //XXX
             bridge.tail_history.len()
         })
-        .run(TEST_INPUT, parts);
+        // .run(TEST_INPUT, parts);
+        .run(include_str!("../../../input/2022/09.txt"), parts);
 }
