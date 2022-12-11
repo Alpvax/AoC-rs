@@ -13,6 +13,7 @@ pub mod d07;
 pub mod d08;
 pub mod d09;
 pub mod d10;
+pub mod d11;
 
 pub fn run_day(day: u8, part: crate::RunPart) {
     match day {
@@ -26,6 +27,7 @@ pub fn run_day(day: u8, part: crate::RunPart) {
         8 => d08::main(part),
         9 => d09::main(part),
         10 => d10::main(part),
+        11 => d11::main(part),
         _ => panic!("Invalid day: {} does not have a solution", day),
     }
 }
