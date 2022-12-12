@@ -31,33 +31,6 @@ impl<'s> Grid<'s> {
             )
         }
     }
-    fn available_moves(&self, (x, y): Point) -> Vec<Point> {
-        let c = self.get((x, y));
-        let mut v = Vec::new();
-        let mut f = |p| {
-            let pc = self.get(p);
-            if c == 'S' || (pc == 'E' && c >= 'y') || (pc != 'E' && pc <= ((c as u8) + 1) as char) {
-                v.push(p);
-            }
-        };
-        if x > 0 {
-            f((x - 1, y));
-        }
-        if x < self.width - 1 {
-            f((x + 1, y));
-        }
-        if y > 0 {
-            f((x, y - 1));
-        }
-        if y < self.height - 1 {
-            f((x, y + 1));
-        }
-        v
-    }
-    fn is_end(&self, point: Point) -> bool {
-        // self.get(point) == 'E'
-        self.end == point
-    }
 }
 
 fn load_grid(input: &str) -> Grid {
@@ -94,15 +67,15 @@ fn load_grid(input: &str) -> Grid {
     }
 }
 
-fn part1(grid: &Grid) -> u16 {
+fn path_find(grid: &Grid, start: Point, end: char, valid_moves: fn(char, char) -> bool) -> u16 {
     let mut steps = 0;
     let mut processed = HashSet::new();
     let mut to_process = HashSet::new();
-    to_process.insert(grid.start);
+    to_process.insert(start);
     'a: while !to_process.is_empty() {
         let mut new = HashSet::new();
         for point in to_process.drain() {
-            if grid.is_end(point) {
+            if grid.get(point) == end {
                 break 'a;
             }
             if processed.contains(&point) {
@@ -110,7 +83,7 @@ fn part1(grid: &Grid) -> u16 {
             }
             processed.insert(point);
             new.extend(
-                grid.available_moves(point)
+                available_moves(grid, point, valid_moves)
                     .into_iter()
                     .filter(|p| !processed.contains(p)),
             );
@@ -121,10 +94,52 @@ fn part1(grid: &Grid) -> u16 {
     steps
 }
 
+fn available_moves(grid: &Grid, (x, y): Point, valid: fn(char, char) -> bool) -> Vec<Point> {
+    let c = grid.get((x, y));
+    let mut v = Vec::new();
+    let mut f = |p| {
+        if valid(c, grid.get(p)) {
+            v.push(p);
+        }
+    };
+    if x > 0 {
+        f((x - 1, y));
+    }
+    if x < grid.width - 1 {
+        f((x + 1, y));
+    }
+    if y > 0 {
+        f((x, y - 1));
+    }
+    if y < grid.height - 1 {
+        f((x, y + 1));
+    }
+    v
+}
+
+fn part1(grid: &Grid) -> u16 {
+    path_find(grid, grid.start, 'E', |c, pc| {
+        c == 'S' || (pc == 'E' && c >= 'y') || (pc != 'E' && pc <= ((c as u8) + 1) as char)
+    })
+}
+
+// Tecnically a path using S could be the shortest path (with length == part1),
+// but I made the assumption that that would not be the case
+fn part2(grid: Grid) -> u16 {
+    path_find(&grid, grid.end, 'a', |c, pc| {
+        if c == 'E' {
+            pc >= 'y'
+        } else {
+            pc >= ((c as u8) - 1) as char
+        }
+    })
+}
+
 pub fn main(parts: crate::RunPart) {
     use crate::dispatcher::*;
     DispatcherBuilder::setup(load_grid)
         .part1(part1)
+        .part2(part2)
         // .run(TEST_INPUT, parts);
         .run(include_str!("../../../input/2022/12.txt"), parts);
 }
