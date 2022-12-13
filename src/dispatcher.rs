@@ -80,7 +80,7 @@ mod builder {
                 let i1 = Instant::now();
                 let p1 = (self.part1)(input);
                 let d1 = i1.elapsed();
-                println!("Part 1: {}. Completed in {:?}", p1, d1,);
+                println!("Part 1: {}. Completed in {:?}", p1, d1);
             }
         }
     }
@@ -155,23 +155,24 @@ mod builder {
                     let i1 = Instant::now();
                     let p1 = (self.part1)(input);
                     let d1 = i1.elapsed();
-                    println!("Part 1: {}. Completed in {:?}", p1, d1,);
+                    println!("Part 1: {}. Completed in {:?}", p1, d1);
                     let i2 = Instant::now();
                     let p2 = (self.part2)(input);
                     let d2 = i2.elapsed();
-                    println!("Part 2: {}. Completed in {:?}", p2, d2,);
+                    println!("Part 2: {}. Completed in {:?}", p2, d2);
+                    println!("Total duration: {:?}", d1 + d2);
                 }
                 crate::RunPart::Part1 => {
                     let i1 = Instant::now();
                     let p1 = (self.part1)(input);
                     let d1 = i1.elapsed();
-                    println!("Part 1: {}. Completed in {:?}", p1, d1,);
+                    println!("Part 1: {}. Completed in {:?}", p1, d1);
                 }
                 crate::RunPart::Part2 => {
                     let i2 = Instant::now();
                     let p2 = (self.part2)(input);
                     let d2 = i2.elapsed();
-                    println!("Part 2: {}. Completed in {:?}", p2, d2,);
+                    println!("Part 2: {}. Completed in {:?}", p2, d2);
                 }
             }
         }
@@ -220,6 +221,7 @@ mod builder {
                         d2,
                         d + d2,
                     );
+                    println!("Total duration: {:?}", d + d1 + d2);
                 }
                 crate::RunPart::Part1 => {
                     let i1 = Instant::now();
