@@ -24,7 +24,6 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
 
 type Point = (i64, i64);
 
-
 #[derive(Debug)]
 struct Sensor {
     x: i64,
@@ -38,7 +37,7 @@ impl Sensor {
             x: s_x,
             y: s_y,
             d: (b_x - s_x).abs() + (b_y - s_y).abs(),
-            occlusions: HashMap::new()
+            occlusions: HashMap::new(),
         }
     }
     fn calc_occlusions(&mut self) {
@@ -67,7 +66,6 @@ impl Sensor {
     }
 }
 
-
 #[derive(Debug)]
 struct Grid {
     sensors: Vec<Sensor>,
@@ -89,13 +87,15 @@ impl Grid {
 fn setup(input: &str) -> Grid {
     input
         .split("\n")
-        .filter_map(|s| RE.captures(s).unwrap().map(|caps| {
+        .filter_map(|s| {
+            RE.captures(s).unwrap().map(|caps| {
                 let x: i64 = caps.get(1).unwrap().as_str().parse().unwrap();
                 let y: i64 = caps.get(2).unwrap().as_str().parse().unwrap();
                 let b_x: i64 = caps.get(3).unwrap().as_str().parse().unwrap();
                 let b_y: i64 = caps.get(4).unwrap().as_str().parse().unwrap();
                 (Sensor::new((x, y), (b_x, b_y)), (b_x, b_y))
-        }))
+            })
+        })
         .fold(Grid::new(), |mut g, (mut s, b)| {
             g.beacons.insert(b);
             g.left = s.min_x(g.left);
@@ -108,25 +108,33 @@ fn setup(input: &str) -> Grid {
 
 fn part1(grid: &Grid) -> usize {
     let y = 2_000_000;
-    let points = grid.sensors.iter().filter_map(|s| s.occlusion(y).map(|(x0, x1)| x0..=x1)).flatten().collect::<HashSet<_>>();
+    let points = grid
+        .sensors
+        .iter()
+        .filter_map(|s| s.occlusion(y).map(|(x0, x1)| x0..=x1))
+        .flatten()
+        .collect::<HashSet<_>>();
     points.len() - grid.beacons.iter().filter(|&&(_, b_y)| b_y == y).count()
 }
-
 
 fn part2(grid: Grid) -> i64 {
     for y in 0..=4_000_000 {
         let mut x = 0;
-        let mut sensors = grid.sensors.iter().filter_map(|s| s.occlusion(y)).collect::<Vec<_>>();
+        let mut sensors = grid
+            .sensors
+            .iter()
+            .filter_map(|s| s.occlusion(y))
+            .collect::<Vec<_>>();
         sensors.sort();
         for (sx0, sx1) in sensors {
-            if grid.beacons.contains(&(x, y))  {
+            if grid.beacons.contains(&(x, y)) {
                 x += 1;
             }
             if sx1 < x {
                 continue;
             } else if sx0 < x {
                 x = sx1 + 1;
-                if x > 4_000_000{
+                if x > 4_000_000 {
                     break;
                 } else {
                     continue;

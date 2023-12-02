@@ -98,7 +98,7 @@ pub fn run(year: u16, day: u8, part: crate::RunPart) {{
         for year in years.iter() {
             writeln!(
                 f,
-                "        {} => {}::run_day(day, part),",
+                "        #[cfg(feature = \"{1}\")]\n        {} => {}::run_day(day, part),",
                 (&year[1..]).parse::<u16>().unwrap(),
                 year
             )?;
@@ -110,7 +110,7 @@ pub fn run(year: u16, day: u8, part: crate::RunPart) {{
 }}"#
         )?;
         for year in years {
-            writeln!(f, "pub mod {};", year)?;
+            writeln!(f, "#[cfg(feature = \"{0}\")]\npub mod {0};", year)?;
         }
     }
     Ok(())

@@ -5,11 +5,18 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["y2023"]
+y2023 = []
+
+
 [dependencies]
 chrono = "0.4.23"
 clap = { version = "4.0.29", features = ["cargo", "string"] }
+fancy-regex = "0.12.0"
 lazy_static = "1.4.0"
-fancy-regex = "0.10.0"
+logos = "0.13.0"
+paste = "1.0.14"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
