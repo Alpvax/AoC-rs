@@ -2,6 +2,24 @@ use std::cmp;
 
 type Id = u64;
 
+fn part1(seeds: &Vec<Id>, maps: &[Vec<(Id, Id, Id)>; 7]) -> Id {
+    seeds.iter().map(|seed| maps.iter().fold(*seed, |id, map|
+        if let Some((dst_start, src_start, _)) = map.iter().find(|(_, src_start, len)| src_start <= &id && src_start + len > id) {
+            dst_start + id - src_start
+        } else {
+            id
+        })).reduce(|a, b| cmp::min(a, b)).unwrap()
+}
+
+fn part2(seeds: Vec<Id>, maps: [Vec<(Id, Id, Id)>; 7]) -> Id {
+    seeds.chunks(2).flat_map(|pair| (pair[0]..pair[0] + pair[1]).into_iter().map(|seed| maps.iter().fold(seed, |id, map|
+    if let Some((dst_start, src_start, _)) = map.iter().find(|(_, src_start, len)| src_start <= &id && src_start + len > id) {
+        dst_start + id - src_start
+    } else {
+        id
+    }))).reduce(|a, b| cmp::min(a, b)).unwrap()
+}
+
 crate::aoc! {
     include_str!("../../../input/2023/05.txt"),
 //     r"
@@ -53,11 +71,6 @@ crate::aoc! {
         }
         (seeds, maps)
     },
-    |(seeds, maps)| seeds.iter().map(|seed| maps.iter().fold(*seed, |id, map|
-        if let Some((dst_start, src_start, _)) = map.iter().find(|(_, src_start, len)| src_start <= &id && src_start + len > id) {
-            dst_start + id - src_start
-        } else {
-            id
-        })).reduce(|a, b| cmp::min(a, b)).unwrap(),
-    |(seeds, maps)| 0,
+    |(seeds, maps)| part1(seeds, maps),
+    |(seeds, maps)| part2(seeds, maps),
 }
