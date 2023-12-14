@@ -10,6 +10,7 @@ pub mod d04;
 pub mod d05;
 pub mod d06;
 pub mod d07;
+pub mod d08;
 pub mod d09;
 pub mod d10;
 pub mod d11;
@@ -23,6 +24,7 @@ pub fn run_day(day: u8, part: crate::RunPart) {
         5 => d05::main(part),
         6 => d06::main(part),
         7 => d07::main(part),
+        8 => d08::main(part),
         9 => d09::main(part),
         10 => d10::main(part),
         11 => d11::main(part),
